@@ -1,14 +1,19 @@
 const express = require('express')
-const app = express()
-const bodyParser = require('body-parser')
-const i18n = require('i18n');
-const path = require('path')
-const index = require('./routes/users')
-
+    app = express()
+    bodyParser = require('body-parser')
+    i18n = require('i18n');
+    path = require('path')
+    userRoutes = require('./routes/users')
+    cors = require('cors')
+    morgan = require('morgan')
 
 // middlewares settings
 app.use(bodyParser.json()) 
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(morgan('dev'))
+app.use(cors())
+
+
 
 i18n.configure({
     locales: ['en', 'es'],
@@ -26,11 +31,7 @@ app.use(function(req, res, next){
     next()
 })
 
-
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'pug')
-
-app.use('/', index)
+app.use('/api', userRoutes)
 
 
 app.use(express.static(path.join(__dirname, 'public')))

@@ -1,16 +1,14 @@
 var mysql = require('mysql');
+const conexion =  require('../server')
 
-var conexion = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : '',
-  database : 'twitter'
-});
-
-conexion.connect()
 
 function createUser(req, res) {
-   
+    console.log(req.body);
+    
+   conexion.query("INSERT INTO usuarios (nombre, correo, password) VALUES(?,?,?)",
+        [req.body.nombre, req.body.correo, req.body.pass], function(err, user){
+
+        })
 }
 
 
