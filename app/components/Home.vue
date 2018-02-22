@@ -10,37 +10,37 @@
       </div>
     </div><br />
 
+    <form v-on:submit.prevent="login">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Nombre:</label>
+            <input type="text" class="form-control" v-model="item.name">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Correo Electronico:</label>
+            <input type="email" class="form-control col-md-6" v-model="item.email">
+          </div>
+        </div>
+      </div>
+       <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label>Contraseña:</label>
+            <input type="password" class="form-control col-md-6" v-model="item.password">
+          </div>
+        </div>
+      </div>
+      <br />
+      <div class="form-group">
+        <button class="btn btn-primary">Login</button>
+      </div>
+    </form>
 
-
-
-
-    <!-- <table class="table table-hover table-bordered">
-      <thead>
-        <tr>
-          <td>ID</td>
-          <td>Item Name</td>
-          <td>Item Price</td>
-          <td>Actions</td>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="item in items">
-          <td>{{ item._id }}</td>
-          <td>{{ item.name }}</td>
-          <td>{{ item.price }}</td>
-          <td>
-            <router-link :to="{ name: 'EditItem', params: {id: item._id} }" class="btn btn-primary">
-              Edit
-            </router-link>
-
-            <button class="btn btn-danger" v-on:click="deleteItem(item._id)">
-              Delete
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table> -->
   </div>
 </template>
 
@@ -48,14 +48,12 @@
 export default {
   data(){
     return{
-      items: [],
-      usuario:string = ''
+      item: {}
     }
   },
 
-  created: function()
-  {
-    this.fetchItems();
+  created: function() {
+    // this.fetchItems();
   },
 
   methods: {
@@ -63,7 +61,16 @@ export default {
       let uri = 'http://localhost:4000/items';
       this.axios.get(uri).then((response) => {
         this.items = response.data;
-      });
+      })
+    },
+    login() {
+        let uri = 'http://localhost:3000/api/register';
+        this.axios.post(uri, this.item).then((res) => {
+          console.log(res);
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
     deleteItem(id) {
       const response = confirm('are you sure you want to delete?');

@@ -4,16 +4,19 @@ const express = require('express')
     i18n = require('i18n');
     path = require('path')
     userRoutes = require('./routes/users')
+    publicsRoutes = require('./routes/publications')
     cors = require('cors')
     morgan = require('morgan')
-
+    session = require('express-session')
 // middlewares settings
 app.use(bodyParser.json()) 
 app.use(bodyParser.urlencoded({ extended: false }))
-app.use(morgan('dev'))
-app.use(cors())
 
-
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: true
+}))
 
 i18n.configure({
     locales: ['en', 'es'],
@@ -32,6 +35,7 @@ app.use(function(req, res, next){
 })
 
 app.use('/api', userRoutes)
+app.use('/api', publicsRoutes)
 
 
 app.use(express.static(path.join(__dirname, 'public')))

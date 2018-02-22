@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const { createUser, getUsers } = require('../controllers/users')
+const { verifyToken, createUser, getUsers } = require('../controllers/users')
 
 router.get('/users', getUsers)
 
@@ -11,5 +11,8 @@ router.get('/', (req, res)=>{
 
 
 router.post('/register', createUser)
+
+router.get('/activation/:token?', verifyToken)
+
 
 module.exports = router
