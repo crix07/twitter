@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Create An Item</h1>
+    <h1>Crear Publicacion</h1>
     <form v-on:submit.prevent="addItem">
       <div class="row">
         <div class="col-md-6">

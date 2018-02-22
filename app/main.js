@@ -7,26 +7,25 @@ import axios from 'axios';
 Vue.use(VueAxios, axios);
 
 import App from './App.vue';
-import CreateItem from './components/CreateItem.vue';
-import DisplayItem from './components/DisplayItem.vue';
-import EditItem from './components/EditItem.vue';
+import createPublication from './components/createPublication.vue';
+import Home from './components/Home.vue';
+import editPublication from './components/editPublication.vue';
 
-const routes = [
-  {
-    name: 'DisplayItem',
-    path: '/',
-    component: DisplayItem
-  },
-  {
-    name: 'CreateItem',
-    path: '/create/item',
-    component: CreateItem
-  },
-  {
-    name: 'EditItem',
-    path: '/edit/:id',
-    component: EditItem
-  }
+const routes = [{
+        name: 'Home',
+        path: '/',
+        component: Home
+    },
+    {
+        name: 'Create',
+        path: '/create/publication',
+        component: createPublication
+    },
+    {
+        name: 'Update',
+        path: '/edit/:id',
+        component: editPublication
+    }
 ];
 
 const router = new VueRouter({ mode: 'history', routes: routes });
