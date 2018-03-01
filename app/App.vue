@@ -7,12 +7,15 @@
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
+      <div v-if="userStored" class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav" style="width: 100%; display: flex; justify-content: space-between;">
           <li class="nav-item active">
             <router-link :to="{ name: 'User' }" class="nav-link">
               Ver usuario
             </router-link>
+          </li>
+           <li class="nav-item active">
+            <p class="pointer" v-on:click="logOut">Cerrar Sesion</p>
           </li>
         </ul>
       </div>
@@ -40,6 +43,23 @@
 
 <script>
   export default {
+    data() {
+      return {
+        userStored: null
+      }
+    },
+    created: function() {
+    
+    this.userStored = JSON.parse(localStorage.getItem('identity'))
+    console.log(this.userStored.nombre);
 
+  },
+  methods: {
+    logOut: function() {
+      localStorage.clear();
+      this.userStored = null
+      this.$router.push({name: 'Home'})
+    }
+  }
   }
 </script>

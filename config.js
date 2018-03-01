@@ -10,5 +10,6 @@ module.exports = {
             password: '',
             database: 'twitter'
         });
-    }
+    },
+    secret: 'geek'
 }

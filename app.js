@@ -1,22 +1,37 @@
 const express = require('express')
-    app = express()
-    bodyParser = require('body-parser')
-    i18n = require('i18n');
-    path = require('path')
-    userRoutes = require('./routes/users')
-    publicsRoutes = require('./routes/publications')
-    cors = require('cors')
-    morgan = require('morgan')
-    session = require('express-session')
+app = express();
+
+http = require('http').Server(app);
+io = require('socket.io')(http);
+
+bodyParser = require('body-parser')
+i18n = require('i18n');
+path = require('path')
+userRoutes = require('./routes/users')
+publicsRoutes = require('./routes/publications')
+cors = require('cors')
+morgan = require('morgan')
+session = require('express-session')
+
 // middlewares settings
-app.use(bodyParser.json()) 
+app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
 app.use(session({
-    secret: 'secret',
+    secret: 'geek',
     resave: false,
     saveUninitialized: true
 }))
+
+
+// SOCKET SETTINGS
+
+io.on('connection', (socket) => {
+    console.log('socket conectado');
+})
+
+
+
 
 i18n.configure({
     locales: ['en', 'es'],
@@ -27,7 +42,7 @@ i18n.configure({
 
 app.use(i18n.init);
 
-app.use(function(req, res, next){
+app.use(function(req, res, next) {
     res.locals.__ = req.__ = function() {
         return i18n.__.apply(req, arguments)
     }
@@ -40,5 +55,9 @@ app.use('/api', publicsRoutes)
 
 app.use(express.static(path.join(__dirname, 'public')))
 
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/index.html'))
+})
 
-module.exports = app
+
+module.exports = http

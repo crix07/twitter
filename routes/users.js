@@ -1,18 +1,16 @@
 const express = require('express')
 const router = express.Router()
+const passport = require('passport')
+const UserControllers = require('../controllers/users')
 
-const { verifyToken, createUser, getUsers } = require('../controllers/users')
+router.get('/users', UserControllers.getUsers)
 
-router.get('/users', getUsers)
+router.post('/login', UserControllers.login);
 
-router.get('/', (req, res)=>{
-    res.send('this works')
-})
+router.post('/register', UserControllers.createUser);
 
-
-router.post('/register', createUser)
-
-router.get('/activation/:token?', verifyToken)
+router.get('/activation/:token', UserControllers.verifyToken);
 
 
-module.exports = router
+
+module.exports = router;
