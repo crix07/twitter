@@ -1,10 +1,16 @@
-const jwt = require('jwt-simple');
-const config = require('../config');
+'use strict'
+
+
+const jwt = require('jwt-simple')
 const moment = require('moment');
-moment.locale('es')
-exports.createToken = function(email) {
+const config = require('../config')
+
+exports.createToken = function(user) {
     let payload = {
-        email: email,
+        sub: user._id,
+        name: user.name,
+        email: user.email,
+        password: user.password,
         iat: moment().format("DD/MM/YYYY"),
         exp: moment().add(3, 'days').calendar()
     }

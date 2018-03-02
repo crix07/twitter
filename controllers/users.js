@@ -1,9 +1,8 @@
 const config = require('../config')
 const jwt = require('../services/jwt');
 const jwtDecode = require('jwt-simple')
-const conexion = config.dbConnection();
 const email = require('emailjs')
-const session = require('express-session')
+const User = require('../models/user');
 const moment = require('moment')
 const bcrypt = require('bcrypt-nodejs')
 const smtp = email.server.connect({
@@ -15,121 +14,124 @@ const smtp = email.server.connect({
 })
 
 function login(req, res) {
-    let email = req.body.email;
-    let password = req.body.password;
+    let params = req.body
+    let email = params.email
+    let password = params.password
 
-    conexion.query("SELECT * FROM usuarios WHERE correo = ? AND activo = 1", [email], (err, rows) => {
-        if (err) return res.status(500).json({ message: `error al intentar loguearte ${err}` })
-        if (!rows) {
-            return res.status(401).send({ message: 'Aceso Denegado' })
-        } else {
-            if (rows && rows.length > 0) {
-                let user = rows[0];
-                if (bcrypt.compareSync(password, user.password)) {
-                    delete user.password;
-                    return res.status(200).send({ user })
+    if (!req.body.email || !req.body.password) {
+        return res.status(403).send({ message: 'Favor rellenar todos los campos' })
+    }
+
+
+    User.findOne({ email: email }, (err, user) => {
+        if (err) return res.status(500).send({ message: 'error en la peticion' })
+
+        if (user) {
+            bcrypt.compare(password, user.password, (err, check) => {
+                if (check) {
+                    if (!user.activo) return res.status(401).send({ message: 'favor revisa tu correo para activar tu cuenta' })
+                    user.password = undefined
+                    return res.status(200).send({
+                        user,
+                        token: jwt.createToken(user)
+                    })
                 } else {
-                    return res.status(401).send({ message: 'Aceso Denegado' })
+                    return res.status(500).send({ message: 'el usuario no se ha podido identificar' })
                 }
-            } else {
-                return res.status(401).send({ message: 'verifica que todas tus credenciales esten bien o activa tu cuenta' })
-            }
+            })
+        } else {
+            return res.status(500).send({ message: 'el usuario no existe, Favor registrate' })
         }
-
     })
 }
 
 
 function createUser(req, res) {
 
-    bcrypt.hash(req.body.password, null, null, (err, hash) => {
-        if (err) return res.status(500).send({ message: `error al registrar ${err}` })
-        if (!req.body.name || !req.body.email || !req.body.password) {
-            return res.status(401).send({ message: 'tienes que enviar todos los campos correctamente' })
-        }
-        let userToken = {
-            name: req.body.name,
-            email: req.body.email,
-            password: hash
-        }
-        conexion.query("INSERT INTO usuarios (nombre, correo, token, password) VALUES(?,?,?,?)", [req.body.name, req.body.email, jwt.createToken(req.body.email), hash], function(err, user, fields) {
-            if (err) {
-                return res.status(500).send({ message: `error al crear el usuario ${err}` });
+    const email = req.body.email
 
+
+    if (req.body.name && req.body.email && req.body.password) {
+        User.find({ email: email.toLowerCase() }, (err, users) => {
+            if (err) return res.status(500).send({ message: `error al buscar el email en la DB ${err}` })
+
+            if (users && users.length >= 1) {
+                users.map(user => {
+                    return res.status(401).send({ message: `ya existe este usuario favor de iniciar sesion como ${user.email}` })
+                })
             } else {
-                smtp.send({
-                        from: "christianmota07@gmail.com",
-                        to: req.body.email,
-                        subject: 'link de activacion',
-                        text: 'activa tu cuenta para ser un super usuario',
-                        attachment: [
-                            { data: "<html><h1>Hola! " + req.body.name + "</h1><p>Has click <a href='http://localhost:3000/api/activation/" + jwt.createToken(req.body.email) + "'>Aqui</a> Para activar tu cuenta</p></html>", alternative: true }
-                        ]
-                    })
-                    // {
-                    //     data: "<html><h1>Hola! ' + req.body.name + '</h1><p>Haga click aqui <a hre='http: //localhost:3000/api/activation/' + md5(req.body.email) + ''>Aqui para activar</a></p></html>"
-                    // }
+                const user = new User()
+                user.name = req.body.name;
+                user.email = req.body.email;
 
-                return res.status(200).send({ ok: true })
+                bcrypt.hash(req.body.password, null, null, (err, hash) => {
+                    user.password = hash
+
+                    user.save((err, userStored) => {
+                        if (err) return res.status(500).send({ message: `error al guardar el usuario ${err}` })
+                        if (userStored) {
+                            userStored.password = undefined
+                            smtp.send({
+                                from: "christianmota07@gmail.com",
+                                to: req.body.email,
+                                subject: 'Link de Activacion',
+                                text: 'activa tu cuenta para ser un super usuario',
+                                attachment: [
+                                    { data: "<html><h1>Hola " + req.body.name + "!</h1><p>Has click <a href='http://localhost:3000/verify/" + jwt.createToken(userStored) + "'>Aqui</a> Para activar tu cuenta</p></html>", alternative: true }
+                                ]
+                            });
+                            return res.status(200).send({ userStored })
+                        } else {
+                            return res.status(403).send({ message: 'el usuario no se guardo' })
+                        }
+                    })
+                })
             }
         })
-
-    })
+    } else {
+        return res.status(500).send({ message: 'Favor rellenar todos los campos' })
+    }
 }
 
 
-function getUsers(req, res) {
-    conexion.query('SELECT * FROM grupos', (err, users) => {
-        if (err) return res.status(200).send({ message: `error al buscar los usuarios ${err}` })
 
-        if (!users) return res.status(404).send({ message: `no se encontraron usuarios ${users}` })
-        return res.status(200).send({ users })
-    })
-}
 
 function verifyToken(req, res) {
+    let token = req.params.token;
 
-    if (!req.params.token) {
-        return res.status(403).send({ message: 'tienes que enviar el token' })
+    let payload = jwtDecode.decode(token, config.secret)
+    let userId = payload.sub
+    let body = {
+        activo: true
     }
+    User.findByIdAndUpdate(userId, body, { new: true }, (err, userUpdate) => {
+        if (err) return res.status(500).send({ message: `error ${err}` });
+        return res.status(200).send({ userUpdate })
+    })
 
-    var token = req.params.token;
-
-
-    try {
-        var payload = jwtDecode.decode(token, config.secret)
-
-        if (payload.exp <= moment().format("DD/MM/YYYY")) {
-            return res.status(401).send({ message: 'el token ha expirado' })
-        }
-
-    } catch (ex) {
-        console.log(ex);
-
-    }
-
-    conexion.query('UPDATE usuarios SET activo = 1 WHERE token = ?', [token], function(err, rows, fields) {
-        if (err) return res.status(500).send({ message: `error al activar el usuario ${err}` })
+}
 
 
-        conexion.query('SELECT * FROM usuarios WHERE token = ?', [token], function(err, rows, fields) {
-            if (err) return res.status(500).send({ message: `error al activar el usuario ${err}` })
+function changePassword(req, res) {
+    let userId = req.user.sub;
+    User.findById(userId, (err, user) => {
+        if (err) return res.status(500).send({ message: `error ${err}` });
+        bcrypt.hash(req.body.password, null, null, (err, hash) => {
+            if (err) return res.status(500).send({ message: `error ${err} ` });
+            user.password = hash;
+            user.save((err, userUpdate) => {
+                if (err) return res.status(500).send({ message: `error ${err} ` });
+                return res.status(200).send({ message: 'password actualizado' })
+            })
+        })
+    })
 
-
-            if (rows && rows.length > 0) {
-                let user = rows[0];
-                return res.status(200).send({ message: `gracias por verificar su cuenta ${user.nombre} ahora ya puede iniciar sesion con nosotros` })
-            } else {
-                return res.status(404).send({ message: 'token no valido' })
-            }
-        });
-    });
 }
 
 
 module.exports = {
     createUser,
-    getUsers,
     verifyToken,
-    login
+    login,
+    changePassword
 }

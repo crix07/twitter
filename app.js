@@ -1,9 +1,6 @@
 const express = require('express')
 app = express();
 
-http = require('http').Server(app);
-io = require('socket.io')(http);
-
 bodyParser = require('body-parser')
 i18n = require('i18n');
 path = require('path')
@@ -22,16 +19,6 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }))
-
-
-// SOCKET SETTINGS
-
-io.on('connection', (socket) => {
-    console.log('socket conectado');
-})
-
-
-
 
 i18n.configure({
     locales: ['en', 'es'],
@@ -53,11 +40,11 @@ app.use('/api', userRoutes)
 app.use('/api', publicsRoutes)
 
 
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public/dist')))
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/index.html'))
+    res.sendFile(path.join(__dirname, 'public/dist/index.html'))
 })
 
 
-module.exports = http
+module.exports = app;

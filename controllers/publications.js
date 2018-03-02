@@ -1,44 +1,42 @@
 const config = require('../config')
 
-const conexion = config.dbConnection()
-
+const Publication = require('../models/publications')
 
 
 function getPublics(req, res) {
-    req.session.dato = "this works"
-    conexion.query("SELECT posts ")
+
+    Publication.find({}).populate('user')
+        .exec((err, publications) => {
+            if (err) return res.status(500).send({ message: `error ${err}` });
+            return res.status(200).send({ publications })
+        })
+
 }
 
 function deletePublic(req, res) {
     let publicId = req.params.id;
-
+    Publication.remove({ _id: publicId }, (err) => {
+        if (err) return res.status(500).send({ message: `error ${err}` });
+        return res.status(200).send({ message: 'eliminado' })
+    })
 }
 
-
-function updatePublic(req, res) {
-
-}
 
 
 function createPublic(req, res) {
+    let public = new Publication();
+    let userId = req.user.sub
 
-
-
-    conexion.query("INSERT INTO posts (idUser, post) VALUES(?,?)", [req.body.id, req.body.text], function(err, rows, fields) {
-        if (err) return res.status(500).send({ message: `error al publicar ${err}` })
-
-        if (rows && rows.length > 0) {
-            let post = rows[0];
-            console.log(post);
-        }
-
-    })
-
+    public.text = req.body.text;
+    public.user = userId;
+    public.save((err, publicStored) => {
+        if (err) return res.status(500).send({ message: `error ${err}` });
+        return res.status(200).send({ publicStored });
+    });
 }
 
 module.exports = {
     createPublic,
     getPublics,
-    deletePublic,
-    updatePublic
+    deletePublic
 }

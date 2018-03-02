@@ -1,16 +1,14 @@
 const express = require('express')
 const router = express.Router()
 
-const { createPublic, getPublics, deletePublic, updatePublic } = require('../controllers/publications')
+const publiControllers = require('../controllers/publications')
+const md_auth = require('../middlewares/authenticated');
 
+router.post('/create-post', md_auth.ensureAuth, publiControllers.createPublic);
 
-router.post('/create-post', createPublic);
+router.get('/get-posts', publiControllers.getPublics);
 
-router.get('/get-posts', getPublics);
-
-router.put('/update-post/:id', updatePublic)
-
-router.delete('/destroy-post/:id', deletePublic)
+router.delete('/destroy-post/:id', publiControllers.deletePublic)
 
 
 module.exports = router;

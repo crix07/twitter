@@ -1,18 +1,13 @@
 const app = require('./app');
 config = require('./config');
+mongoose = require('mongoose');
 
-conexion = config.dbConnection();
-
-conexion.connect((err) => {
-    if (err) {
-        console.log(`error al conectar a la base de datos ${err.stack}`);
-        return;
-    }
-
-    if (!err) {
+mongoose.connect(config.db)
+    .then(() => {
         console.log('conexion establecida exitosamente');
-        http.listen(config.port, () => {
+        app.listen(config.port, () => {
             console.log(`server is listening on port ${config.port}`);
         })
-    }
-});
+
+    })
+    .catch(err => console.log(`error al conectar a la db ${err}`))
